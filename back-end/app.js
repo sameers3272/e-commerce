@@ -55,9 +55,9 @@ app.use("/api/v1", userRoute);
 app.use("/api/v1", orderRoute);
 app.use("/api/v1", paymentRoute);
 
-app.use(express.static(path.join("..","front-end","build")))
+app.use(express.static(path.join("../front-end/build")))
 app.get("*",(req,res,next)=>{
-  res.sendFile(path.join("..","front-end","build","index.html"))
+  res.sendFile(path.join("../front-end/build/index.html"))
 })
 
 app.use(errorMiddleware);
