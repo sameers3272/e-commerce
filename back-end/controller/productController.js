@@ -4,6 +4,7 @@ const Product = require("../model/productModel");
 const ApiFeatures = require("../utils/apiFeatures");
 const fs = require("fs");
 
+
 //Getting all products
 exports.getAllProducts = catchAsyncError(async (req, res, next) => {
   const productsCount = await Product.countDocuments();
@@ -23,6 +24,12 @@ exports.getAllProducts = catchAsyncError(async (req, res, next) => {
     .pagination(resultPerPage);
 
   products = await apiFeatures2.query;
+
+  // for (const product of products) {
+  //   const imagesUrls = await getImages(product.images);
+  //   product.images = imagesUrls
+  // }
+
   res.status(200).json({
     success: true,
     products,
@@ -39,6 +46,9 @@ exports.getOneProduct = catchAsyncError(async (req, res, next) => {
   if (!product) {
     return next(new ErrorHandler("No product found", 404));
   }
+
+  // const imagesUrls = await getImages(product.images);
+  // product.images = imagesUrls
 
   return res.status(201).json({
     success: true,
@@ -61,16 +71,18 @@ exports.createProduct = catchAsyncError(async (req, res, next) => {
 
   req.body.user = req.user._id;
 
-  if (!req.files) {
+  if (JSON.stringify(req.files) === JSON.stringify({})) {
     return next(new ErrorHandler("please upload atleast one image", 400));
   }
 
-  const images = req.files.images;
-  req.body.images =
-    images &&
-    images.map((obj) => {
-      return obj.path;
-    });
+  // console.log(req.files)
+
+  // req.body.images = await uploadImages(images);
+
+  req.body.images = req.files &&
+   req.files.images.map((obj) => {
+    return obj.path;
+  });
 
   const product = await Product.create(req.body);
 
@@ -89,17 +101,17 @@ exports.updateProduct = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("No product found", 404));
   }
 
-  if (req.files.images) {
+  if (JSON.stringify(req.files) !== JSON.stringify({})) {
     product.images.forEach((img) => {
-      if (fs.existsSync(img)) {
-        fs.unlinkSync(img);
-      }
+    if (fs.existsSync(img)) {
+      fs.unlinkSync(img);
+    }
+    // await deleteImages(product.images);
     });
+    console.log(req.files);
+    req.body.images = req.files.images.map(img=>img.path);
+    // req.body.images = await uploadImages(images);
   }
-
-  const images = req.files.images;
-
-  req.body.images = images && images.map((img) => img.path);
 
   product = await Product.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
@@ -121,6 +133,7 @@ exports.deleteProduct = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("No product found", 404));
   }
 
+  // await deleteImages(product.images)
   product.images.forEach((img) => {
     if (fs.existsSync(img)) {
       fs.unlinkSync(img);
